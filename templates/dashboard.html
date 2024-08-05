@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Management Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Stock Management Dashboard</h1>
+
+    <h2>Overview</h2>
+    <p>Total Invested Amount (not sold yet): {{ invested_amount }}</p>
+    <p>Current Portfolio Value: <span id="current-value">{{ current_value }}</span></p>
+    <p>Realized Profit: {{ realized_profit }}</p>
+    <p>Net Worth: {{ net_worth }}</p>
+    <p>Total Current Profit: {{ total_current_profit }}</p>
+
+    <h2>Holdings</h2>
+    <ul>
+        {% for holding in holdings %}
+        <li>{{ holding.symbol }} - Quantity: {{ holding.quantity }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Buy Stock</h2>
+    <form method="post" action="{{ url_for('dashboard') }}">
+        <label for="buy-symbol">Stock Symbol:</label>
+        <input type="text" id="buy-symbol" name="symbol" required>
+        
+        <label for="buy-quantity">Quantity:</label>
+        <input type="number" id="buy-quantity" name="quantity" required>
+        
+        <button type="submit" name="action" value="buy">Buy</button>
+    </form>
+
+    <h2>Sell Stock</h2>
+    <form method="post" action="{{ url_for('dashboard') }}">
+        <label for="sell-symbol">Stock Symbol:</label>
+        <input type="text" id="sell-symbol" name="symbol" required>
+        
+        <label for="sell-quantity">Quantity to Sell:</label>
+        <input type="number" id="sell-quantity" name="quantity" required>
+        
+        <label for="sell-price">Selling Price:</label>
+        <input type="text" id="sell-price" name="price" required>
+        
+        <button type="submit" name="action" value="sell">Sell</button>
+    </form>
+
+    <h2>Reset Portfolio</h2>
+    <form method="post" action="{{ url_for('dashboard') }}">
+        <button type="submit" name="action" value="reset">Reset Portfolio</button>
+    </form>
+
+    <h2>Stock List</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Current Price</th>
+                <th>Recent Stats</th>
+            </tr>
+        </thead>
+        <tbody id="stocks-table">
+            {% for stock in stocks %}
+            <tr>
+                <td>{{ stock }}</td>
+                <td class="stock-price" data-symbol="{{ stock }}">Loading...</td>
+                <td><button class="view-stats" data-symbol="{{ stock }}">View Stats</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Transactions</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Type</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Profit/Loss</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+            <tr>
+                <td>{{ transaction[0] }}</td>
+                <td>{{ transaction[1] }}</td>
+                <td>{{ transaction[2] }}</td>
+                <td>{{ transaction[3] }}</td>
+                <td>
+                    {% if transaction[1] == 'sell' %}
+                        {{ (transaction[3] * transaction[2]) - (transaction[2] * get_buy_price(transaction[0])) }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function fetchAndUpdatePrices() {
+            var symbols = [];
+            $('#stocks-table .stock-price').each(function() {
+                symbols.push($(this).data('symbol'));
+            });
+
+            $.get('/update_prices', { symbols: symbols }, function(data) {
+                $.each(data, function(symbol, price) {
+                    $('#stocks-table .stock-price[data-symbol="' + symbol + '"]').text(price);
+                });
+            });
+        }
+
+        function fetchStockStats(symbol) {
+            $.get('/stock_stats/' + symbol, function(data) {
+                alert('Stock: ' + symbol + '\n' +
+                      'Current Price: ' + data.currentPrice + '\n' +
+                      'Market Cap: ' + data.marketCap + '\n' +
+                      'PE Ratio: ' + data.peRatio);
+            });
+        }
+
+        $(document).ready(function() {
+            fetchAndUpdatePrices(); // Initial fetch
+
+            setInterval(fetchAndUpdatePrices, 2000); // Update every 2 seconds
+
+            $('#stocks-table').on('click', '.view-stats', function() {
+                var symbol = $(this).data('symbol');
+                fetchStockStats(symbol);
+            });
+        });
+    </script>
+</body>
+</html>
