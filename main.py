@@ -1,3 +1,5 @@
+import heapq
+
 from flask import Flask, render_template, request, session, jsonify
 import pymysql
 import yfinance as yf
@@ -55,7 +57,7 @@ def dashboard():
     holdings = get_holdings()
     transactions = get_transactions()
 
-    return render_template('dashboard.html', stocks=stocks, invested_amount=invested_amount,
+    return render_template('dashboard.html', stocks=stocks, invested_amount=calculate_invested_amount()[0],
                            current_value=current_value, realized_profit=realized_profit,
                            net_worth=net_worth, total_current_profit=total_current_profit,
                            holdings=holdings, transactions=transactions)
@@ -152,34 +154,66 @@ def calculate_current_profit():
     total_current_profit = realized_profit + (net_worth- buy_amount)
     return total_current_profit
 
+# def calculate_invested_amount():
+#     connection = get_db_connection()
+#     cursor = connection.cursor()
+#     cursor.execute("""
+#         SELECT SUM(Price * Quantity) FROM Transactions
+#         WHERE TransactionType = 'buy'
+#
+#     """)
+#     buy_amount = cursor.fetchone()[0]
+#     total_invested = decimal.Decimal(0)
+#     # for symbol, buy_amount in results:
+#     #     cursor.execute("""
+#     #         SELECT SUM(Quantity*Price) FROM Transactions
+#     #         WHERE Symbol = %s AND TransactionType = 'sell'
+#     #     """, (symbol,))
+#     #
+#     #     sold_amount = cursor.fetchone()[0] or decimal.Decimal(0)
+#     #     total_invested += buy_amount+sold_amount
+#     #
+#     #     cursor.close()
+#     #     connection.close()
+#     realized_profit = calculate_realized_profit()
+#     total_invested += realized_profit + buy_amount
+#     return total_invested
 def calculate_invested_amount():
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("""
-        SELECT SUM(Price * Quantity) FROM Transactions
-        WHERE TransactionType = 'buy'
-        
-    """)
-    buy_amount = cursor.fetchone()[0]
-    total_invested = decimal.Decimal(0)
-    # for symbol, buy_amount in results:
-    #     cursor.execute("""
-    #         SELECT SUM(Quantity*Price) FROM Transactions
-    #         WHERE Symbol = %s AND TransactionType = 'sell'
-    #     """, (symbol,))
-    #
-    #     sold_amount = cursor.fetchone()[0] or decimal.Decimal(0)
-    #     total_invested += buy_amount+sold_amount
-    #
-    #     cursor.close()
-    #     connection.close()
-    realized_profit = calculate_realized_profit()
-    total_invested += realized_profit + buy_amount
-    return total_invested
-global tot_buy=0
-def calculate_main():
     connection=get_db_connection()
     cursor=connection.cursor()
+    #fetch transactions
+    cursor.execute("""
+                SELECT TransactionID, Symbol, TransactionType, Quantity, Price FROM Transactions
+                
+            """)
+    transactions=cursor.fetchall()
+    stocks_queues={}
+    tot_buy = 0
+    realized_profit=0
+    for trans in transactions:
+
+        transid,symbol,action,qty,price=trans
+        if symbol not in stocks_queues:
+            stock = yf.Ticker(symbol)
+            price_curr = decimal.Decimal(stock.history(period='1d').iloc[0]['Close'])
+
+            stocks_queues[symbol]=[]
+        if action=='buy':
+            for _ in range(qty):
+                heapq.heappush(stocks_queues[symbol],price)
+                tot_buy+=price
+
+
+        elif action=='sell':
+            for _ in range(qty):
+                if stocks_queues[symbol]:
+                    selling_stock=heapq.heappop(stocks_queues[symbol])
+                    tot_buy-=selling_stock
+                    realized_profit-=selling_stock
+                    realized_profit+=price_curr
+    return (tot_buy,realized_profit)
+
+
 
 
 def calculate_portfolio_value(stocks):
@@ -206,42 +240,8 @@ def calculate_portfolio_value(stocks):
     return portfolio_value
 
 def calculate_realized_profit():
-    #FLAWED LOGIC
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("""
-        SELECT SUM(Price * Quantity) FROM Transactions
-        WHERE TransactionType = 'sell'
-    """)
-    sell_amount = cursor.fetchone()[0] or decimal.Decimal(0)
-    
-    cursor.execute("""
-        SELECT Symbol, SUM(Price * Quantity) FROM Transactions
-        WHERE TransactionType = 'buy' AND Symbol IN (
-            SELECT DISTINCT Symbol FROM Transactions WHERE TransactionType = 'sell'
-        )
-        GROUP BY Symbol
-    """)
-    buy_amount_for_sold = decimal.Decimal(0)
-    for symbol, amount in cursor.fetchall():
-        cursor.execute("""
-            SELECT SUM(Quantity) FROM Transactions
-            WHERE Symbol = %s AND TransactionType = 'sell'
-        """, (symbol,))
-        sold_quantity = cursor.fetchone()[0] or decimal.Decimal(0)
-        cursor.execute("""
-            SELECT SUM(Quantity) FROM Transactions
-            WHERE Symbol = %s AND TransactionType = 'buy'
-        """, (symbol,))
-        bought_quantity = cursor.fetchone()[0] or decimal.Decimal(0)
-        if bought_quantity > sold_quantity:
-            buy_amount_for_sold += amount
-    global invested_amount
-    invested_amount = invested_amount + buy_amount_for_sold
-    realized_profit = sell_amount - buy_amount_for_sold
-    cursor.close()
-    connection.close()
-    return realized_profit
+
+    return calculate_invested_amount()[1]
 
 def get_holdings():
     connection = get_db_connection()
