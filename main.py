@@ -3,9 +3,10 @@ import pymysql
 import yfinance as yf
 import decimal
 import random
+import json
 
 # Parameters -
-# 1) Total invested amount (amount currently invested in stocks)
+# 1) Total invested amount (amount currently invested in stocks): buyprice*qty of holding
 # 2) Current portfolio value (current value of invested money)
 # 3) Realized profit (profit for sold stocks)
 # 4) Net worth = unrealized profit + realized profit + total invested amount till date (whether sold or unsold)
@@ -22,7 +23,7 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
 def get_db_connection():
-    return pymysql.connect(host="localhost", user="root", password="25058966", database="stock_management")
+    return pymysql.connect(host="localhost", user="root", password="c0nygre", database="stock_management")
 
 @app.route('/')
 def home():
@@ -48,12 +49,12 @@ def dashboard():
     current_value = decimal.Decimal(calculate_portfolio_value(stocks))
     realized_profit = decimal.Decimal(calculate_realized_profit())
     global invested_amount
-    previous_principal_sum = invested_amount
-    net_worth = realized_profit + current_value + previous_principal_sum
-    total_current_profit = realized_profit + (current_value - invested_amount)
+    net_worth=get_networth()
+
+    total_current_profit = calculate_current_profit()
     holdings = get_holdings()
     transactions = get_transactions()
-    
+
     return render_template('dashboard.html', stocks=stocks, invested_amount=invested_amount,
                            current_value=current_value, realized_profit=realized_profit,
                            net_worth=net_worth, total_current_profit=total_current_profit,
@@ -136,27 +137,50 @@ def get_all_stocks():
     cursor.close()
     connection.close()
     return stocks
+def calculate_current_profit():
+    realized_profit=calculate_realized_profit()
+    net_worth=get_networth()
+    connection=get_db_connection()
+    cursor=connection.cursor()
+    cursor.execute("""
+            SELECT SUM(Price * Quantity) FROM Transactions
+            WHERE TransactionType = 'buy'
+
+        """)
+    buy_amount = cursor.fetchone()[0] or decimal.Decimal(0)
+
+    total_current_profit = realized_profit + (net_worth- buy_amount)
+    return total_current_profit
 
 def calculate_invested_amount():
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("""
-        SELECT Symbol, SUM(Price * Quantity) FROM Transactions
+        SELECT SUM(Price * Quantity) FROM Transactions
         WHERE TransactionType = 'buy'
-        GROUP BY Symbol
+        
     """)
-    results = cursor.fetchall()
+    buy_amount = cursor.fetchone()[0]
     total_invested = decimal.Decimal(0)
-    for symbol, amount in results:
-        cursor.execute("""
-            SELECT SUM(Quantity) FROM Transactions
-            WHERE Symbol = %s AND TransactionType = 'sell'
-        """, (symbol,))
-        sold_quantity = cursor.fetchone()[0] or decimal.Decimal(0)
-        total_invested -= amount*sold_quantity
-    cursor.close()
-    connection.close()
+    # for symbol, buy_amount in results:
+    #     cursor.execute("""
+    #         SELECT SUM(Quantity*Price) FROM Transactions
+    #         WHERE Symbol = %s AND TransactionType = 'sell'
+    #     """, (symbol,))
+    #
+    #     sold_amount = cursor.fetchone()[0] or decimal.Decimal(0)
+    #     total_invested += buy_amount+sold_amount
+    #
+    #     cursor.close()
+    #     connection.close()
+    realized_profit = calculate_realized_profit()
+    total_invested += realized_profit + buy_amount
     return total_invested
+global tot_buy=0
+def calculate_main():
+    connection=get_db_connection()
+    cursor=connection.cursor()
+
 
 def calculate_portfolio_value(stocks):
     connection = get_db_connection()
@@ -182,6 +206,7 @@ def calculate_portfolio_value(stocks):
     return portfolio_value
 
 def calculate_realized_profit():
+    #FLAWED LOGIC
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("""
@@ -229,6 +254,9 @@ def get_holdings():
     results = cursor.fetchall()
     holdings = []
     for symbol, quantity in results:
+        #fetching current price for each symbol
+        stock = yf.Ticker(symbol)
+        curr_price = decimal.Decimal(stock.history(period='1d').iloc[0]['Close'])
         cursor.execute("""
             SELECT SUM(Quantity) FROM Transactions
             WHERE Symbol = %s AND TransactionType = 'sell'
@@ -236,10 +264,20 @@ def get_holdings():
         sold_quantity = cursor.fetchone()[0] or decimal.Decimal(0)
         net_quantity = quantity - sold_quantity
         if net_quantity > 0:
-            holdings.append({'symbol': symbol, 'quantity': net_quantity})
+            holdings.append({'symbol': symbol, 'quantity': net_quantity,'price':curr_price})
     cursor.close()
     connection.close()
     return holdings
+def get_networth():
+    net_worth=0
+    holdings=get_holdings()
+    for i in holdings:
+        net_worth+=i['quantity']*i['price']
+    return net_worth
+
+
+
+
 
 def get_transactions():
     connection = get_db_connection()
@@ -253,6 +291,7 @@ def get_transactions():
     return transactions
 
 def _get_buy_price(symbol):
+    #Faulty logic buy price recurrring even after selling. Easier to implement an average prie logic
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("""
