@@ -86,7 +86,7 @@
                 <td>{{ transaction[4] }}</td>
                 <td>
                     {% if transaction[2] == 'sell' %}
-                        {{ (transaction[3] * transaction[4]) - (transaction[3] * get_buy_price(transaction[1])) }}
+                        {{ profit }}
                     {% else %}
                         N/A
                     {% endif %}

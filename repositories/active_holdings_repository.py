@@ -123,3 +123,35 @@ class ActiveHoldingsRepository:
     #     connection.close()
     #     return buy_price
 
+    def sell_transaction_dummy(self, symbol, action, quantity, price): 
+        if action=="sell":
+            connection = self.get_db_connection()
+            cursor = connection.cursor()
+            profit = 0 
+            tot_buy = 0
+            
+            for _ in range(quantity):
+                cursor.execute("""Update ACTIVE_HOLDINGS
+                               SET Quantity = Quantity-1 where Symbol = %s order by Price LIMIT 1
+                               """, (symbol,))
+                connection.commit() 
+                cursor.execute("""
+                           SELECT Quantity,ID,Price from ACTIVE_HOLDINGS 
+                           WHERE Symbol = %s Order by Price LIMIT 1
+                            """, (symbol,))
+                
+                currQuantityAndID = cursor.fetchone()
+
+                if(currQuantityAndID):
+                    tot_buy+=currQuantityAndID[2]
+                    if(currQuantityAndID[0]==0):
+                        cursor.execute("""
+                           DELETE FROM ACTIVE_HOLDINGS 
+                           WHERE ID = %s
+                            """, (currQuantityAndID[1],))
+                        connection.commit()
+
+            cursor.close()
+            connection.close()
+            profit=price*quantity-tot_buy
+            return profit

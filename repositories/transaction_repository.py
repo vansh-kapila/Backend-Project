@@ -74,7 +74,8 @@ class TransactionRepository:
             SELECT Price FROM Transactions
             WHERE Symbol = %s AND TransactionType = 'buy'
             ORDER BY TransactionID ASC LIMIT 1
-        """, (symbol,))
+        """, (symbol,)) 
+        
         buy_price = cursor.fetchone()[0] or decimal.Decimal(0)
         cursor.close()
         connection.close()

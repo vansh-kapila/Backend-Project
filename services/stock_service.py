@@ -18,8 +18,9 @@ class StockService:
 
     def sell_stock(self, symbol, quantity, sell_price):
         self.transaction_repository.add_transaction(symbol, 'sell', quantity, sell_price)
-        self.active_holdings_repository.sell_transaction(symbol,'sell',quantity,sell_price)
+        profit = self.active_holdings_repository.sell_transaction_dummy(symbol,'sell',quantity,sell_price)
         self._update_session_purchased_stocks(symbol, remove=True)
+        return profit
 
     def reset_portfolio(self):
         self.active_holdings_repository.reset_transactions()

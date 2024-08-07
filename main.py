@@ -14,6 +14,8 @@ def home():
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
+    
+    profit_print = None
     if request.method == 'POST':
         action = request.form.get('action')
         symbol = request.form.get('symbol')
@@ -22,7 +24,7 @@ def dashboard():
         if action == 'buy':
             stock_service.buy_stock(symbol, quantity, price)
         elif action == 'sell':
-            stock_service.sell_stock(symbol, quantity, price)
+            profit_print = stock_service.sell_stock(symbol, quantity, price)
         elif action == 'reset':
             stock_service.reset_portfolio()
 
@@ -35,16 +37,12 @@ def dashboard():
 
     return render_template('dashboard.html', stocks=stocks, invested_amount=stock_service.calculate_invested_amount()[0],
                            net_worth=net_worth, realized_profit=realized_profit, total_current_profit=total_current_profit,
-                           holdings=holdings, transactions=transactions)
+                           holdings=holdings, transactions=transactions, profit=profit_print)
 
 @app.route('/stock_stats/<symbol>', methods=['GET'])
 def stock_stats(symbol):
     stats = stock_service.get_stock_stats(symbol)
     return jsonify(stats)
-
-@app.context_processor
-def utility_processor():
-    return dict(get_buy_price=stock_service.get_buy_price)
 
 if __name__ == '__main__':
     app.run(debug=True)
