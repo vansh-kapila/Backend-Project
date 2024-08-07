@@ -95,10 +95,13 @@ class StockService:
         return {
             'currentPrice': stats.get('regularMarketPrice', 'N/A'),
             'marketCap': stats.get('marketCap', 'N/A'),
-            'peRatio': stats.get('trailingPE', 'N/A')
+            'peRatio': stats.get('trailingPE', 'N/A'),
+            'sector': stats.get('sector','N/A'),
+            # if time permits, might plot 3m 6m 1y graphs using history method of api.
         }
 
     def _get_current_price(self, symbol):
+        # would work on this and change it by a rand(), till then we can use the form.
         stock = yf.Ticker(symbol)
         return decimal.Decimal(stock.history(period='1d').iloc[0]['Close'])
 

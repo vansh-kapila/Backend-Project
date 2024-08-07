@@ -40,6 +40,13 @@ def dashboard():
                            holdings=holdings, transactions=transactions, profit=profit_print)
 
 @app.route('/stock_stats/<symbol>', methods=['GET'])
+# Contains stock data.
+def stock_stats(symbol):
+    stats = stock_service.get_stock_stats(symbol)
+    return jsonify(stats)
+
+@app.route('/stock_', methods=['GET'])
+# Contains stock data.
 def stock_stats(symbol):
     stats = stock_service.get_stock_stats(symbol)
     return jsonify(stats)
