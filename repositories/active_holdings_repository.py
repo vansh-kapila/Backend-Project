@@ -11,7 +11,7 @@ class ActiveHoldingsRepository:
             cursor = connection.cursor()
             cursor.execute("""
                 INSERT INTO ACTIVE_HOLDINGS (Symbol, Quantity, Price)
-                VALUES (%s, %s, %s, %s)
+                VALUES (%s, %s, %s)
             """, (symbol, quantity, price))
             connection.commit()
             cursor.close()
@@ -33,24 +33,67 @@ class ActiveHoldingsRepository:
         cursor.close()
         connection.close()
         return stocks
+    
+    def sell_transaction(self, symbol, action, quantity, price): 
+        if action=="sell":
+            connection = self.get_db_connection()
+            cursor = connection.cursor()
+            profit = 0 
+            tot_buy = 0
+            
+            for _ in range(quantity):
+                cursor.execute("""Update ACTIVE_HOLDINGS
+                               SET Quantity = Quantity-1 where Symbol = %s order by Price LIMIT 1
+                               """, (symbol,))
+                connection.commit() 
+                cursor.execute("""
+                           SELECT Quantity,ID,Price from ACTIVE_HOLDINGS 
+                           WHERE Symbol = %s Order by Price LIMIT 1
+                            """, (symbol,))
+                currQuantityAndID = cursor.fetchone()
+                if(currQuantityAndID):
+                    tot_buy+=currQuantityAndID[2]
+                    if(currQuantityAndID[0]==0):
+                        cursor.execute("""
+                           DELETE FROM ACTIVE_HOLDINGS 
+                           WHERE ID = %s
+                            """, (currQuantityAndID[1],))
+                        connection.commit()
 
-    def get_active_transactions(self):
+            cursor.close()
+            connection.close()
+            profit=price*quantity-tot_buy
+            return profit
+
+
+    def get_net_worth_amount(self):
         connection = self.get_db_connection()
         cursor = connection.cursor()
-        cursor.execute("SELECT ID, Symbol, TransactionType, Quantity, Price FROM ACTIVE_HOLDINGS")
+        cursor.execute("""
+            SELECT SUM(Price*Quantity) FROM ACTIVE_HOLDINGS
+        """)
+        buy_price = cursor.fetchone()[0] or decimal.Decimal(0)
+        cursor.close()
+        connection.close()
+        return buy_price
+
+    def get_transactions(self):
+        connection = self.get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT ID, Symbol, Quantity, Price FROM ACTIVE_HOLDINGS")
         transactions = cursor.fetchall()
         cursor.close()
         connection.close()
         return transactions
 
-    def get_total_quantity(self, symbol, transaction_type):
+    def get_total_quantity(self, symbol):
         connection = self.get_db_connection()
         cursor = connection.cursor()
         cursor.execute("""
-            SELECT SUM(Quantity) FROM Transactions
-            WHERE Symbol = %s AND TransactionType = %s
-        """, (symbol, transaction_type))
-        quantity = cursor.fetchone()[0] or decimal.Decimal(0)
+            SELECT SUM(Quantity) FROM ACTIVE_HOLDINGS
+            WHERE Symbol = %s
+        """, (symbol))
+        quantity = cursor.fetchone()[0]
         cursor.close()
         connection.close()
         return quantity
@@ -59,8 +102,7 @@ class ActiveHoldingsRepository:
         connection = self.get_db_connection()
         cursor = connection.cursor()
         cursor.execute("""
-            SELECT Symbol, SUM(Quantity) AS Quantity FROM Transactions
-            WHERE TransactionType = 'buy'
+            SELECT Symbol, SUM(Quantity) AS Quantity FROM ACTIVE_HOLDINGS
             GROUP BY Symbol
         """)
         results = cursor.fetchall()
@@ -68,15 +110,16 @@ class ActiveHoldingsRepository:
         connection.close()
         return results
 
-    def get_buy_price(self, symbol):
-        connection = self.get_db_connection()
-        cursor = connection.cursor()
-        cursor.execute("""
-            SELECT Price FROM Transactions
-            WHERE Symbol = %s AND TransactionType = 'buy'
-            ORDER BY TransactionID ASC LIMIT 1
-        """, (symbol,))
-        buy_price = cursor.fetchone()[0] or decimal.Decimal(0)
-        cursor.close()
-        connection.close()
-        return buy_price
+    # def get_buy_price(self, symbol):
+    #     connection = self.get_db_connection()
+    #     cursor = connection.cursor()
+    #     cursor.execute("""
+    #         SELECT Price FROM ACTIVE_HOLDINGS
+    #         WHERE Symbol = %s
+    #         ORDER BY TransactionID ASC LIMIT 1
+    #     """, (symbol,))
+    #     buy_price = cursor.fetchone()[0] or decimal.Decimal(0)
+    #     cursor.close()
+    #     connection.close()
+    #     return buy_price
+

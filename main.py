@@ -17,7 +17,7 @@ def dashboard():
     if request.method == 'POST':
         action = request.form.get('action')
         symbol = request.form.get('symbol')
-        quantity = decimal.Decimal(request.form.get('quantity', 0))
+        quantity = int(request.form.get('quantity', 0))
         price = decimal.Decimal(request.form.get('price', 0))
         if action == 'buy':
             stock_service.buy_stock(symbol, quantity, price)
@@ -26,17 +26,15 @@ def dashboard():
         elif action == 'reset':
             stock_service.reset_portfolio()
 
-    stocks = stock_service.get_all_stocks()
-    current_value = stock_service.calculate_portfolio_value(stocks)
-    realized_profit = stock_service.calculate_realized_profit()
+    stocks = stock_service.get_all_stocks() 
     net_worth = stock_service.get_networth()
+    realized_profit = stock_service.calculate_realized_profit()
     total_current_profit = stock_service.calculate_current_profit()
     holdings = stock_service.get_holdings()
     transactions = stock_service.get_transactions()
 
     return render_template('dashboard.html', stocks=stocks, invested_amount=stock_service.calculate_invested_amount()[0],
-                           current_value=current_value, realized_profit=realized_profit,
-                           net_worth=net_worth, total_current_profit=total_current_profit,
+                           net_worth=net_worth, realized_profit=realized_profit, total_current_profit=total_current_profit,
                            holdings=holdings, transactions=transactions)
 
 @app.route('/stock_stats/<symbol>', methods=['GET'])

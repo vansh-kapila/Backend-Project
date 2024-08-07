@@ -11,9 +11,8 @@
     <h2>Overview</h2>
     <p>Total Invested Amount (not sold yet): {{ invested_amount }}</p>
 
-    <p>Current Portfolio Value: <span id="current-value">{{ current_value }}</span></p>
-    <p>Realized Profit: {{ realized_profit }}</p>
     <p>Net Worth: {{ net_worth }}</p>
+    <p>Realized Profit: {{ realized_profit }}</p>
     <p>Total Current Profit: {{ total_current_profit }}</p>
     <h2>Holdings</h2>
     <ul>
@@ -86,8 +85,8 @@
                 <td>{{ transaction[3] }}</td>
                 <td>{{ transaction[4] }}</td>
                 <td>
-                    {% if transaction[1] == 'sell' %}
-                        {{ (transaction[3] * transaction[2]) - (transaction[2] * get_buy_price(transaction[0])) }}
+                    {% if transaction[2] == 'sell' %}
+                        {{ (transaction[3] * transaction[4]) - (transaction[3] * get_buy_price(transaction[1])) }}
                     {% else %}
                         N/A
                     {% endif %}

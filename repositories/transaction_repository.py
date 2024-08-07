@@ -49,7 +49,7 @@ class TransactionRepository:
             SELECT SUM(Quantity) FROM Transactions
             WHERE Symbol = %s AND TransactionType = %s
         """, (symbol, transaction_type))
-        quantity = cursor.fetchone()[0] or decimal.Decimal(0)
+        quantity = cursor.fetchone()[0]
         cursor.close()
         connection.close()
         return quantity
