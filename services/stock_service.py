@@ -9,9 +9,8 @@ class StockService:
         self.stock_repository = StockRepository()
         self.transaction_repository = TransactionRepository()
 
-    def buy_stock(self, symbol, quantity):
-        price = self._get_current_price(symbol)
-        self.transaction_repository.add_transaction(symbol, 'buy', quantity, price)
+    def buy_stock(self, symbol, quantity, buy_price): 
+        self.transaction_repository.add_transaction(symbol, 'buy', quantity, buy_price)
         self._update_session_purchased_stocks(symbol)
 
     def sell_stock(self, symbol, quantity, sell_price):
@@ -57,7 +56,7 @@ class StockService:
     def calculate_portfolio_value(self, stocks):
         portfolio_value = decimal.Decimal(0)
         for symbol in stocks:
-            price = self._get_current_price(symbol)
+            price = self.transaction_repository.get_buy_price(symbol)
             bought_quantity = self.transaction_repository.get_total_quantity(symbol, 'buy')
             sold_quantity = self.transaction_repository.get_total_quantity(symbol, 'sell')
             net_quantity = bought_quantity - sold_quantity
@@ -71,11 +70,11 @@ class StockService:
         holdings = []
         results = self.transaction_repository.get_holdings()
         for symbol, quantity in results:
-            curr_price = self._get_current_price(symbol)
+            buy_price = self.transaction_repository.get_buy_price(symbol)
             sold_quantity = self.transaction_repository.get_total_quantity(symbol, 'sell')
             net_quantity = quantity - sold_quantity
             if net_quantity > 0:
-                holdings.append({'symbol': symbol, 'quantity': net_quantity, 'price': curr_price})
+                holdings.append({'symbol': symbol, 'quantity': net_quantity, 'price': buy_price})
         return holdings
 
     def get_networth(self):

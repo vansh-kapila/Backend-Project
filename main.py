@@ -19,9 +19,8 @@ def dashboard():
         symbol = request.form.get('symbol')
         quantity = decimal.Decimal(request.form.get('quantity', 0))
         price = decimal.Decimal(request.form.get('price', 0))
-
         if action == 'buy':
-            stock_service.buy_stock(symbol, quantity)
+            stock_service.buy_stock(symbol, quantity, price)
         elif action == 'sell':
             stock_service.sell_stock(symbol, quantity, price)
         elif action == 'reset':
