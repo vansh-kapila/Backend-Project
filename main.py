@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, jsonify
+from flask import Flask, request, jsonify
 from services.stock_service import StockService
 import decimal
 
@@ -10,16 +10,17 @@ stock_service = StockService()
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return jsonify({"message": "Welcome to the Stock Management API!"})
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     profit_print = None
     if request.method == 'POST':
-        action = request.form.get('action')
-        symbol = request.form.get('symbol')
-        quantity = int(request.form.get('quantity', 0))
-        price = decimal.Decimal(request.form.get('price', 0))
+        data = request.get_json()
+        action = data.get('action') 
+        symbol = data.get('symbol')
+        quantity = int(data.get('quantity', 0))
+        price = decimal.Decimal(data.get('price', 0))
         if action == 'buy':
             stock_service.buy_stock(symbol, quantity, price)
         elif action == 'sell':
@@ -33,17 +34,19 @@ def dashboard():
     total_current_profit = stock_service.calculate_current_profit()
     holdings = stock_service.get_holdings()
     transactions = stock_service.get_transactions() 
-    
-    # return jsonify({"stocks":stocks, "invested_amount":stock_service.calculate_invested_amount()[0],
-    #                        "net_worth":net_worth, "realized_profit":realized_profit, "total_current_profit":total_current_profit,
-    #                        "holdings":holdings, "transactions":transactions, "profit":profit_print})
 
-    return render_template('dashboard.html', stocks=stocks, invested_amount=stock_service.calculate_invested_amount()[0],
-                           net_worth=net_worth, realized_profit=realized_profit, total_current_profit=total_current_profit,
-                           holdings=holdings, transactions=transactions, profit=profit_print)
+    return jsonify({
+        "stocks": stocks,
+        "invested_amount": stock_service.calculate_invested_amount()[0],
+        "net_worth": net_worth,
+        "realized_profit": realized_profit,
+        "total_current_profit": total_current_profit,
+        "holdings": holdings,
+        "transactions": transactions,
+        "profit": profit_print
+    })
 
 @app.route('/stock_stats/<symbol>', methods=['GET'])
-# Contains stock data.
 def stock_stats(symbol):
     stats = stock_service.get_stock_stats(symbol)
     return jsonify(stats)
