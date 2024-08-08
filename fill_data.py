@@ -3,7 +3,7 @@ import yfinance as yf
 import random
 
 # Database connection
-db = pymysql.connect(host="localhost", user="root", password="25058966", database="stock_management")
+db = pymysql.connect(host="localhost", user="root", password="c0nygre", database="stock_management")
 cursor = db.cursor()
 
 # Generate a list of stock symbols (you can also use a predefined list or API)

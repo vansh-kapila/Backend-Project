@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, session, jsonify
 from services.stock_service import StockService
 import decimal
-from flask import Flask, session
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
