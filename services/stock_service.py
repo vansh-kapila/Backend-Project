@@ -100,7 +100,8 @@ class StockService:
             'sector': stats.get('sector','N/A'),
             'profit_percent': self.profit_percentage_of_stock(symbol),
             'top_5_gainers': self.top_5_gainers(),
-            'top_5_losers': self.top_5_losers()
+            'top_5_losers': self.top_5_losers(),
+            'shortName': stats.get('shortName','N/A')
             # if time permits, might plot 3m 6m 1y graphs using history method of api.
         }
 
