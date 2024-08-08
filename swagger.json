@@ -2,7 +2,7 @@
     "swagger": "2.0",
     "info": {
       "title": "Stock Portfolio App",
-      "description": "A sample API that demonstrates how to use the stock portfolio application.",
+      "description": "An API that can be used to manage basic functionalities of a stock portfolio. Buy and sell operations can be performed on NASDAQ stocks at live prices.",
       "version": "1.0"
     },
     "basePath": "/api",
@@ -16,9 +16,9 @@
       "application/json"
     ],
     "paths": {
-      "/hello": {
+      "/dashboard": {
         "get": {
-          "summary": "Returns a simple greeting message.",
+          "summary": "Returns the stock dashboard.",
           "produces": [
             "application/json"
           ],
@@ -28,9 +28,14 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "message": {
-                    "type": "string"
-                  }
+                    "stocks": List,
+                    "invested_amount": stock_service.calculate_invested_amount()[0],
+                    "net_worth": net_worth,
+                    "realized_profit": realized_profit,
+                    "total_current_profit": total_current_profit,
+                    "holdings": holdings,
+                    "transactions": transactions,
+                    "profit": profit_print
                 }
               }
             }
