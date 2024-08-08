@@ -73,11 +73,11 @@ class StockService:
         results = self.transaction_repository.get_holdings()
         for symbol, quantity in results:
             #buy_price = self.transaction_repository.get_buy_price(symbol) or decimal.Decimal(0)
-            buy_price=self._get_current_price(symbol)
+            buy_price=self.active_holdings_repository.weighted_average(symbol)
             sold_quantity = self.transaction_repository.get_total_quantity(symbol, 'sell') or int(0) 
             net_quantity = quantity - sold_quantity
             if net_quantity > 0:
-                holdings.append({'symbol': symbol, 'quantity': net_quantity, 'price': buy_price})
+                holdings.append({'symbol': symbol, 'quantity': net_quantity, 'weighted average price': buy_price})
         return holdings
 
     def get_networth(self):
