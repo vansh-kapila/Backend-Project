@@ -94,7 +94,7 @@ class StockService:
         stats = stock.info
         
         return {
-            'currentPrice': stats.get('regularMarketPrice', 'N/A'),
+            'currentPrice': stats.get('previousClose', 'N/A'),
             'marketCap': stats.get('marketCap', 'N/A'),
             'peRatio': stats.get('trailingPE', 'N/A'),
             'sector': stats.get('sector','N/A'),
