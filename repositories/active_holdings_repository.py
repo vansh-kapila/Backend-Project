@@ -1,5 +1,7 @@
 import pymysql
 import decimal 
+import yfinance as yf
+import json
 class ActiveHoldingsRepository:
 
     def get_db_connection(self):
@@ -156,6 +158,41 @@ class ActiveHoldingsRepository:
             profit=price*quantity-tot_buy
             return profit
         
+    def _get_current_price(self, symbol):
+        # would work on this and change it by a rand(), till then we can use the form.
+        stock = yf.Ticker(symbol)
+        return decimal.Decimal(stock.history(period='1d').iloc[0]['Close'])
+        
+    def weighted_average(self,symbol):
+        connection = self.get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("""
+            SELECT SUM(Price*quantity) FROM ACTIVE_HOLDINGS
+            WHERE Symbol = %s
+            ORDER BY ID ASC LIMIT 1
+        """, (symbol,)) 
+        
+        total_price = cursor.fetchone()[0] or decimal.Decimal(0)
+        cursor.execute("""
+            SELECT SUM(quantity) FROM ACTIVE_HOLDINGS
+            WHERE Symbol = %s
+            ORDER BY ID ASC LIMIT 1
+        """, (symbol,)) 
+        
+        total_qty = cursor.fetchone()[0] or decimal.Decimal(0)
+        cursor.close()
+        connection.close()
+        if total_qty==0:
+            return 0
+        return total_price/total_qty
+    
+    def profit_percentage_of_stock(self,symbol):
+        weighted_average = self.weighted_average(symbol)
+        curr_price = self._get_current_price(symbol)
+        if weighted_average==0:
+           return None
+        return (curr_price-weighted_average)/curr_price*100
+        
     def get_all_stocks(self):
         connection = self.get_db_connection()
         cursor = connection.cursor()
@@ -164,3 +201,46 @@ class ActiveHoldingsRepository:
         cursor.close()
         connection.close()
         return stocks
+    
+
+    def top_5_gainers(self):
+        connection = self.get_db_connection()
+        cursor = connection.cursor()
+        
+        cursor.execute("SELECT DISTINCT Symbol FROM Transactions")
+        symbols = cursor.fetchall()
+        
+        profit_percentages = []
+        for symbol in symbols:
+            symbol = symbol[0]
+            profit_percentage = self.profit_percentage_of_stock(symbol)
+            profit_percentages.append((symbol, profit_percentage))
+        
+        cursor.close()
+        connection.close()
+        
+        top_5 = sorted(profit_percentages, key=lambda x: x[1], reverse=True)[:5]
+        result = [{'symbol': symbol, 'profit_percentage': str(profit_percentage)} for symbol, profit_percentage in top_5]
+        
+        return json.dumps(result)
+
+    def top_5_losers(self):
+        connection = self.get_db_connection()
+        cursor = connection.cursor()
+        
+        cursor.execute("SELECT DISTINCT Symbol FROM Transactions")
+        symbols = cursor.fetchall()
+        
+        profit_percentages = []
+        for symbol in symbols:
+            symbol = symbol[0]
+            profit_percentage = self.profit_percentage_of_stock(symbol)
+            profit_percentages.append((symbol, profit_percentage))
+        
+        cursor.close()
+        connection.close()
+        
+        bottom_5 = sorted(profit_percentages, key=lambda x: x[1])[:5]
+        result = [{'symbol': symbol, 'profit_percentage': str(profit_percentage)} for symbol, profit_percentage in bottom_5]
+        
+        return json.dumps(result)

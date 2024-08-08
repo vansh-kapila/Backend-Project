@@ -34,9 +34,9 @@ def dashboard():
     holdings = stock_service.get_holdings()
     transactions = stock_service.get_transactions() 
 
-    return render_template('dashboard.html', stocks=stocks, invested_amount=stock_service.calculate_invested_amount()[0],
-                           net_worth=net_worth, realized_profit=realized_profit, total_current_profit=total_current_profit,
-                           holdings=holdings, transactions=transactions, profit=profit_print)
+    return jsonify({"stocks":stocks, "invested_amount":stock_service.calculate_invested_amount()[0],
+                           "net_worth":net_worth, "realized_profit":realized_profit, "total_current_profit":total_current_profit,
+                           "holdings":holdings, "transactions":transactions, "profit":profit_print})
 
 @app.route('/stock_stats/<symbol>', methods=['GET'])
 # Contains stock data.

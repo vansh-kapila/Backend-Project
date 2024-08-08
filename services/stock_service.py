@@ -128,7 +128,7 @@ class StockService:
         return self.active_holdings_repository.profit_percentage_of_stock(symbol)
     
     def top_5_gainers(self):
-        return self.transaction_repository.top_5_gainers()
+        return self.active_holdings_repository.top_5_gainers()
     
     def top_5_losers(self):
-        return self.transaction_repository.top_5_losers()
+        return self.active_holdings_repository.top_5_losers()
