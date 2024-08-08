@@ -1,7 +1,7 @@
 import pymysql
 import decimal
-import json
-class TransactionRepository: 
+import json 
+class TransactionRepository:  
     def get_db_connection(self):
         return pymysql.connect(host="localhost", user="root", password="c0nygre", database="stock_management")
 
@@ -112,7 +112,7 @@ class TransactionRepository:
         profit_percentages = []
         for symbol in symbols:
             symbol = symbol[0]
-            profit_percentage = self.profit_percentage_of_stock(symbol)
+            profit_percentage = self.stock_repository.profit_percentage_of_stock(symbol)
             profit_percentages.append((symbol, profit_percentage))
         
         cursor.close()
@@ -133,7 +133,7 @@ class TransactionRepository:
         profit_percentages = []
         for symbol in symbols:
             symbol = symbol[0]
-            profit_percentage = self.profit_percentage_of_stock(symbol)
+            profit_percentage = self.stock_repository.profit_percentage_of_stock(symbol)
             profit_percentages.append((symbol, profit_percentage))
         
         cursor.close()

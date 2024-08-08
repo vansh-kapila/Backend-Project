@@ -125,12 +125,10 @@ class StockService:
         session.modified = True
 
     def profit_percentage_of_stock(self,symbol):
-        weighted_average = self.transaction_repository.profit_percentage_of_stock(symbol)
-        curr_price = self._get_current_price(symbol)
-        return (curr_price-weighted_average)/curr_price*100
+        return self.active_holdings_repository.profit_percentage_of_stock(symbol)
     
     def top_5_gainers(self):
-        return self.transaction_repository.top_5_gainers()
+        return self.active_holdings_repository.top_5_gainers()
     
     def top_5_losers(self):
-        return self.transaction_repository.top_5_losers()
+        return self.active_holdings_repository.top_5_losers()
