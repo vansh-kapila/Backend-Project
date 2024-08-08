@@ -28,7 +28,7 @@ class StockService:
         self._reset_session_purchased_stocks()
 
     def get_all_stocks(self):
-        return self.transaction_repository.get_all_stocks()
+        return self.active_holdings_repository.get_all_stocks()
 
     def calculate_current_profit(self):
         invested_amount, realized_profit = self.calculate_invested_amount()
@@ -92,11 +92,15 @@ class StockService:
     def get_stock_stats(self, symbol):
         stock = yf.Ticker(symbol)
         stats = stock.info
+        
         return {
             'currentPrice': stats.get('regularMarketPrice', 'N/A'),
             'marketCap': stats.get('marketCap', 'N/A'),
             'peRatio': stats.get('trailingPE', 'N/A'),
             'sector': stats.get('sector','N/A'),
+            'profit_percent': self.profit_percentage_of_stock(symbol),
+            'top_5_gainers': self.top_5_gainers(),
+            'top_5_losers': self.top_5_losers()
             # if time permits, might plot 3m 6m 1y graphs using history method of api.
         }
 
@@ -119,4 +123,14 @@ class StockService:
     def _reset_session_purchased_stocks(self):
         session['purchased_stocks'] = []
         session.modified = True
+
+    def profit_percentage_of_stock(self,symbol):
+        weighted_average = self.transaction_repository.profit_percentage_of_stock(symbol)
+        curr_price = self._get_current_price(symbol)
+        return (curr_price-weighted_average)/curr_price*100
     
+    def top_5_gainers(self):
+        return self.transaction_repository.top_5_gainers()
+    
+    def top_5_losers(self):
+        return self.transaction_repository.top_5_losers()

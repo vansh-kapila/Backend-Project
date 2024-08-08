@@ -14,7 +14,6 @@ def home():
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    
     profit_print = None
     if request.method == 'POST':
         action = request.form.get('action')
@@ -33,19 +32,13 @@ def dashboard():
     realized_profit = stock_service.calculate_realized_profit()
     total_current_profit = stock_service.calculate_current_profit()
     holdings = stock_service.get_holdings()
-    transactions = stock_service.get_transactions()
+    transactions = stock_service.get_transactions() 
 
     return render_template('dashboard.html', stocks=stocks, invested_amount=stock_service.calculate_invested_amount()[0],
                            net_worth=net_worth, realized_profit=realized_profit, total_current_profit=total_current_profit,
                            holdings=holdings, transactions=transactions, profit=profit_print)
 
 @app.route('/stock_stats/<symbol>', methods=['GET'])
-# Contains stock data.
-def stock_stats(symbol):
-    stats = stock_service.get_stock_stats(symbol)
-    return jsonify(stats)
-
-@app.route('/stock_', methods=['GET'])
 # Contains stock data.
 def stock_stats(symbol):
     stats = stock_service.get_stock_stats(symbol)

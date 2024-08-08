@@ -155,3 +155,12 @@ class ActiveHoldingsRepository:
             connection.close()
             profit=price*quantity-tot_buy
             return profit
+        
+    def get_all_stocks(self):
+        connection = self.get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT Symbol FROM ACTIVE_HOLDINGS GROUP BY Symbol")
+        stocks = [row[0] for row in cursor.fetchall()]
+        cursor.close()
+        connection.close()
+        return stocks
