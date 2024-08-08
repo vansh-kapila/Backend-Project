@@ -98,18 +98,7 @@
     </table>
 
     <script>
-        function fetchAndUpdatePrices() {
-            var symbols = [];
-            $('#stocks-table .stock-price').each(function() {
-                symbols.push($(this).data('symbol'));
-            });
 
-            $.get('/update_prices', { symbols: symbols }, function(data) {
-                $.each(data, function(symbol, price) {
-                    $('#stocks-table .stock-price[data-symbol="' + symbol + '"]').text(price);
-                });
-            });
-        }
 
         function fetchStockStats(symbol) {
             $.get('/stock_stats/' + symbol, function(data) {
@@ -119,17 +108,6 @@
                       'PE Ratio: ' + data.peRatio);
             });
         }
-
-        $(document).ready(function() {
-            fetchAndUpdatePrices(); // Initial fetch
-
-            setInterval(fetchAndUpdatePrices, 2000); // Update every 2 seconds
-
-            $('#stocks-table').on('click', '.view-stats', function() {
-                var symbol = $(this).data('symbol');
-                fetchStockStats(symbol);
-            });
-        });
     </script>
 </body>
 </html>
