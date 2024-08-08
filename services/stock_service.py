@@ -132,3 +132,5 @@ class StockService:
     
     def top_5_losers(self):
         return self.active_holdings_repository.top_5_losers()
+    
+   
