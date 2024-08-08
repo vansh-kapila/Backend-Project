@@ -1,8 +1,24 @@
 from flask import Flask, request, jsonify
 from services.stock_service import StockService
 import decimal
+from flask_swagger import swagger
+from flask_swagger_ui import get_swaggerui_blueprint
+import json
 
 app = Flask(__name__)
+
+SWAGGER_URL = '/swagger'
+API_URL = 'http://127.0.0.1:5000/swagger.json'
+
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': "Sample API"
+    }
+)
+
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 app.secret_key = 'your_secret_key'
 
 # Service instance
@@ -50,6 +66,18 @@ def dashboard():
 def stock_stats(symbol):
     stats = stock_service.get_stock_stats(symbol)
     return jsonify(stats)
+
+@app.route("/spec")
+def spec():
+    swag = swagger(app)
+    swag['info']['version'] = "1.0"
+    swag['info']['title'] = "API documentation for Stock Portfolio app"
+    return jsonify(swag)
+
+@app.route('/swagger.json')
+def swagger():
+    with open('swagger.json', 'r') as f:
+        return jsonify(json.load(f))
 
 if __name__ == '__main__':
     app.run(debug=True)

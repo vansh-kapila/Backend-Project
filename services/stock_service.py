@@ -73,11 +73,11 @@ class StockService:
         results = self.transaction_repository.get_holdings()
         for symbol, quantity in results:
             #buy_price = self.transaction_repository.get_buy_price(symbol) or decimal.Decimal(0)
-            buy_price=self._get_current_price(symbol)
+            buy_price=self.active_holdings_repository.weighted_average(symbol)
             sold_quantity = self.transaction_repository.get_total_quantity(symbol, 'sell') or int(0) 
             net_quantity = quantity - sold_quantity
             if net_quantity > 0:
-                holdings.append({'symbol': symbol, 'quantity': net_quantity, 'price': buy_price})
+                holdings.append({'symbol': symbol, 'quantity': net_quantity, 'weighted average price': buy_price})
         return holdings
 
     def get_networth(self):
@@ -94,13 +94,14 @@ class StockService:
         stats = stock.info
         
         return {
-            'currentPrice': stats.get('regularMarketPrice', 'N/A'),
+            'currentPrice': stats.get('previousClose', 'N/A'),
             'marketCap': stats.get('marketCap', 'N/A'),
             'peRatio': stats.get('trailingPE', 'N/A'),
             'sector': stats.get('sector','N/A'),
             'profit_percent': self.profit_percentage_of_stock(symbol),
             'top_5_gainers': self.top_5_gainers(),
-            'top_5_losers': self.top_5_losers()
+            'top_5_losers': self.top_5_losers(),
+            'shortName': stats.get('shortName','N/A')
             # if time permits, might plot 3m 6m 1y graphs using history method of api.
         }
 
