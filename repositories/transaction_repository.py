@@ -36,7 +36,7 @@ class TransactionRepository:
     def get_transactions(self):
         connection = self.get_db_connection()
         cursor = connection.cursor()
-        cursor.execute("SELECT TransactionID, Symbol, TransactionType, Quantity, Price FROM Transactions")
+        cursor.execute("SELECT TransactionID, Symbol, TransactionType, Quantity, Price, TransactionDate FROM Transactions")
         transactions = cursor.fetchall()
         cursor.close()
         connection.close()

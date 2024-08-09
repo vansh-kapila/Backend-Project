@@ -5,6 +5,8 @@ import yfinance as yf
 import decimal
 import heapq
 from flask import Flask, session
+from collections import defaultdict
+from datetime import datetime
 class StockService:
     def __init__(self):
         self.stock_repository = StockRepository()
@@ -31,15 +33,17 @@ class StockService:
         return self.active_holdings_repository.get_all_stocks()
 
     def calculate_current_profit(self):
-        invested_amount, realized_profit = self.calculate_invested_amount()
+        invested_amount, realized_profit, temp = self.calculate_invested_amount()
         return realized_profit
 
     def calculate_invested_amount(self): 
         transactions = self.transaction_repository.get_transactions()
         stocks_queues = {} 
         realized_profit = 0
+        realized_profit_vs_date = {}
+
         for trans in transactions:
-            _, symbol, action, qty, price = trans
+            _, symbol, action, qty, price, transdate = trans
             if symbol not in stocks_queues:
                 price_curr = self._get_current_price(symbol)
                 stocks_queues[symbol] = []
@@ -47,14 +51,17 @@ class StockService:
                 for _ in range(qty):
                     heapq.heappush(stocks_queues[symbol], price) 
             elif action == 'sell':
+                days_profit = 0
                 for _ in range(qty):
                     if stocks_queues[symbol]:
                         selling_stock = heapq.heappop(stocks_queues[symbol]) 
                         realized_profit -= selling_stock
                         realized_profit += price 
-        return self.active_holdings_repository.get_net_worth_amount(),realized_profit
-
-
+                date=transdate.date()
+                dt_object= transdate.strftime("%Y-%m-%d")
+                realized_profit_vs_date[dt_object]=realized_profit
+        return self.active_holdings_repository.get_net_worth_amount(),realized_profit,realized_profit_vs_date
+    
     def calculate_portfolio_value(self, stocks):
         portfolio_value = decimal.Decimal(0)
         for symbol in stocks:
@@ -101,7 +108,8 @@ class StockService:
             'profit_percent': self.profit_percentage_of_stock(symbol),
             'top_5_gainers': self.top_5_gainers(),
             'top_5_losers': self.top_5_losers(),
-            'shortName': stats.get('shortName','N/A')
+            'shortName': stats.get('shortName','N/A'),
+            'volume': stats.get('volume','N/A')
             # if time permits, might plot 3m 6m 1y graphs using history method of api.
         }
 
@@ -133,3 +141,44 @@ class StockService:
     
     def top_5_losers(self):
         return self.active_holdings_repository.top_5_losers()
+    
+    def realized_profit_graphs(self):
+        return self
+    
+    def sector_graphs(self):
+        symbols = self.active_holdings_repository.get_active_stocks()  # Fetch the active stock symbols
+        sector_counts = defaultdict(int)  # Dictionary to hold sector counts
+
+        for symbol in symbols:
+            stock = yf.Ticker(symbol)  # Get stock info
+            stats = stock.info
+            sector = stats.get('sector', 'Unknown')  # Get the sector or use 'Unknown' if not available
+            sector_counts[sector] += 1  # Increment the count for the sector
+
+        return sector_counts
+    
+    def categorize_market_cap(self,market_cap):
+        """Categorize stocks based on market cap."""
+        if market_cap >= 10**11:  # Large-cap
+            return 'Large Cap'
+        elif 10**10 <= market_cap < 10**11:  # Mid-cap
+            return 'Mid Cap'
+        elif 10**9 <= market_cap < 10**10:  # Small-cap
+            return 'Small Cap'
+        else:  # Micro-cap and below
+            return 'Micro/Other'
+
+    def cap_graphs(self):
+        symbols = self.active_holdings_repository.get_active_stocks() # Nested dictionary for sectors and caps
+        cap_counts = defaultdict(int)
+        for symbol in symbols:
+            stock = yf.Ticker(symbol)  # Get stock info
+            stats = stock.info  
+
+            market_cap = stats.get('marketCap', 0)  # Get market cap or use 0 if not available
+
+            cap_category = self.categorize_market_cap(market_cap) 
+             # Increment the count for the sector and cap category
+            cap_counts[cap_category]+=1
+
+        return cap_counts
