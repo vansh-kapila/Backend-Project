@@ -12,7 +12,7 @@ CREATE TABLE Stocks (
 );
 
 CREATE TABLE Transactions (
-    ID INT AUTO_INCREMENT PRIMARY KEY,
+    TransactionID INT AUTO_INCREMENT PRIMARY KEY,
     Symbol VARCHAR(10),
     TransactionType ENUM('buy', 'sell'),
     Quantity INT,

@@ -4,6 +4,8 @@ import decimal
 from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
 import json
+import yfinance as yf
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -78,6 +80,53 @@ def spec():
 def swagger():
     with open('swagger.json', 'r') as f:
         return jsonify(json.load(f))
+
+@app.route('/historical_data', methods=['GET'])
+def get_historical_data():
+    symbol = request.args.get('symbol')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    data = yf.download(symbol, start=start_date, end=end_date)
+    historical_data = []
+    for index, row in data.iterrows():
+        historical_data.append({
+            'x': index.strftime('%Y-%m-%d'),
+            'y': row['Close']
+        })
+
+    return jsonify(historical_data)
+
+@app.route('/networthgraph_data', methods=['GET'])
+def get_networthgraph_data():
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
+
+    if not start_date_str or not end_date_str:
+        return jsonify({"error": "Both start_date and end_date are required"}), 400
+
+    try:
+        # Convert dates from string to datetime objects
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+    # Fetch net worth for each date in the range
+    networth_data = []
+    current_date = start_date
+
+    while current_date <= end_date:
+        networth = stock_service.networthgraph_data(current_date)
+        networth_data.append({
+            "date": current_date.strftime('%Y-%m-%d'),
+            "networth": networth
+        })
+        # Move to the next day
+        current_date = current_date + timedelta(days=1)
+
+    return jsonify(networth_data)
+    
 
 if __name__ == '__main__':
     app.run(debug=True)

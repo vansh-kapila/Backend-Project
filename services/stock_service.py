@@ -133,5 +133,26 @@ class StockService:
     
     def top_5_losers(self):
         return self.active_holdings_repository.top_5_losers()
+
+    def networthgraph_data(self, end_date):
+        transactions = self.transaction_repository.get_transactions_before_date(end_date)
+        holdings = {}
+        print(transactions)
+        for transaction in transactions:
+            symbol = transaction['symbol']
+            transaction_type = transaction['type']
+            quantity = transaction['quantity']
+            price = transaction['price']
+
+            if symbol not in holdings:
+                holdings[symbol] = 0
+
+            if transaction_type == 'buy':
+                holdings[symbol] += quantity * price
+            elif transaction_type == 'sell':
+                holdings[symbol] -= quantity * price
+
+        net_worth = sum(holdings.values())
+        return net_worth
+
     
-   
