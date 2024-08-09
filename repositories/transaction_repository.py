@@ -5,13 +5,13 @@ class TransactionRepository:
     def get_db_connection(self):
         return pymysql.connect(host="localhost", user="root", password="25058966", database="stock_management")
 
-    def add_transaction(self, symbol, action, quantity, price):
+    def add_transaction(self, symbol, action, quantity, price, datetime):
         connection = self.get_db_connection()
         cursor = connection.cursor()
         cursor.execute("""
-            INSERT INTO Transactions (Symbol, TransactionType, Quantity, Price)
-            VALUES (%s, %s, %s, %s)
-        """, (symbol, action, quantity, price))
+            INSERT INTO Transactions (Symbol, TransactionType, Quantity, Price, TransactionDate)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (symbol, action, quantity, price, datetime))
         connection.commit()
         cursor.close()
         connection.close()

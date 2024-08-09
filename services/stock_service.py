@@ -13,14 +13,14 @@ class StockService:
         self.transaction_repository = TransactionRepository()
         self.active_holdings_repository = ActiveHoldingsRepository()
 
-    def buy_stock(self, symbol, quantity, buy_price): 
-        self.transaction_repository.add_transaction(symbol, 'buy', quantity, buy_price)
-        self.active_holdings_repository.add_transaction(symbol, 'buy', quantity, buy_price)
+    def buy_stock(self, symbol, quantity, buy_price, datetime): 
+        self.transaction_repository.add_transaction(symbol, 'buy', quantity, buy_price, datetime)
+        self.active_holdings_repository.add_transaction(symbol, 'buy', quantity, buy_price, datetime)
         self._update_session_purchased_stocks(symbol)
 
-    def sell_stock(self, symbol, quantity, sell_price):
-        self.transaction_repository.add_transaction(symbol, 'sell', quantity, sell_price)
-        profit = self.active_holdings_repository.sell_transaction_dummy(symbol,'sell',quantity,sell_price)
+    def sell_stock(self, symbol, quantity, sell_price, datetime):
+        self.transaction_repository.add_transaction(symbol, 'sell', quantity, sell_price, datetime)
+        profit = self.active_holdings_repository.sell_transaction_dummy(symbol,'sell',quantity,sell_price, datetime)
         self._update_session_purchased_stocks(symbol, remove=True)
         return profit
 
