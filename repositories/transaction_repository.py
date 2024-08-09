@@ -3,7 +3,7 @@ import decimal
 import json 
 class TransactionRepository:  
     def get_db_connection(self):
-        return pymysql.connect(host="localhost", user="root", password="25058966", database="stock_management")
+        return pymysql.connect(host="localhost", user="root", password="c0nygre", database="stock_management")
 
     def add_transaction(self, symbol, action, quantity, price, datetime):
         connection = self.get_db_connection()
@@ -143,3 +143,33 @@ class TransactionRepository:
         result = [{'symbol': symbol, 'profit_percentage': str(profit_percentage)} for symbol, profit_percentage in bottom_5]
         
         return json.dumps(result)
+    
+    
+    def get_transactions_before_date(self, end_date):
+        connection = self.get_db_connection()
+        cursor = connection.cursor()
+        print(end_date)
+        cursor.execute(
+            """
+            SELECT Symbol, TransactionType, Quantity, Price, TransactionDate
+            FROM Transactions
+            WHERE TransactionDate < %s
+            """,
+            (end_date,)
+        )
+        transactions = cursor.fetchall()
+        print(transactions)
+
+        # Convert datetime objects to strings
+        transactions_json = []
+        for transaction in transactions:
+            transaction_json = {
+                'symbol': transaction[0],
+                'type': transaction[1],
+                'quantity': transaction[2],
+                'price': float(transaction[3]),
+                'date': transaction[4].isoformat()  # Convert datetime to string
+            }
+            transactions_json.append(transaction_json)
+
+        return transactions_json
