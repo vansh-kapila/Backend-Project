@@ -8,14 +8,14 @@ class ActiveHoldingsRepository:
     def get_db_connection(self):
         return pymysql.connect(host="localhost", user="root", password="c0nygre", database="stock_management")
 
-    def add_transaction(self, symbol, action, quantity, price):
+    def add_transaction(self, symbol, action, quantity, price, datetime):
         if action=="buy":
             connection = self.get_db_connection()
             cursor = connection.cursor()
             cursor.execute("""
-                INSERT INTO ACTIVE_HOLDINGS (Symbol, Quantity, Price)
-                VALUES (%s, %s, %s)
-            """, (symbol, quantity, price))
+                INSERT INTO ACTIVE_HOLDINGS (Symbol, Quantity, Price, TransactionDate)
+                VALUES (%s, %s, %s, %s)
+            """, (symbol, quantity, price, datetime))
             connection.commit()
             cursor.close()
             connection.close()
@@ -126,7 +126,7 @@ class ActiveHoldingsRepository:
     #     connection.close()
     #     return buy_price
 
-    def sell_transaction_dummy(self, symbol, action, quantity, price): 
+    def sell_transaction_dummy(self, symbol, action, quantity, price, datetime): 
         if action=="sell":
             connection = self.get_db_connection()
             cursor = connection.cursor()
@@ -192,7 +192,7 @@ class ActiveHoldingsRepository:
         curr_price = self._get_current_price(symbol)
         if weighted_average==0:
            return None
-        return (curr_price-weighted_average)/curr_price*100
+        return (curr_price-weighted_average)/curr_price*100 
         
     def get_all_stocks(self):
         connection = self.get_db_connection()
@@ -219,8 +219,10 @@ class ActiveHoldingsRepository:
         
         cursor.close()
         connection.close()
-        
-        top_5 = sorted(profit_percentages, key=lambda x: x[1], reverse=True)[:5]
+        clean_profit_percentages = [x for x in profit_percentages if x[1] is not None]
+
+        top_5 = sorted(clean_profit_percentages, key=lambda x: x[1], reverse=True)[:5]
+
         result = [{'symbol': symbol, 'profit_percentage': str(profit_percentage)} for symbol, profit_percentage in top_5]
         
         return json.dumps(result)
@@ -240,8 +242,10 @@ class ActiveHoldingsRepository:
         
         cursor.close()
         connection.close()
+        clean_profit_percentages = [x for x in profit_percentages if x[1] is not None]
+
+        bottom_5 = sorted(clean_profit_percentages, key=lambda x: x[1])[:5]
         
-        bottom_5 = sorted(profit_percentages, key=lambda x: x[1])[:5]
         result = [{'symbol': symbol, 'profit_percentage': str(profit_percentage)} for symbol, profit_percentage in bottom_5]
         
         return json.dumps(result)

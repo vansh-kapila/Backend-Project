@@ -6,7 +6,6 @@ from flask_swagger_ui import get_swaggerui_blueprint
 import json
 import yfinance as yf
 from datetime import datetime, timedelta
-
 app = Flask(__name__)
 
 SWAGGER_URL = '/swagger'
@@ -38,11 +37,13 @@ def dashboard():
         action = data.get('action') 
         symbol = data.get('symbol')
         quantity = int(data.get('quantity', 0))
-        price = decimal.Decimal(data.get('price', 0)) 
+        price = decimal.Decimal(data.get('price', 0))
+        input_str = data.get('date')  
+        input_datetime = datetime.strptime(input_str, "%Y-%m-%d %H:%M:%S")
         if action == 'buy':
-            stock_service.buy_stock(symbol, quantity, price)
+            stock_service.buy_stock(symbol, quantity, price, input_datetime)
         elif action == 'sell':
-            profit_print = stock_service.sell_stock(symbol, quantity, price)
+            profit_print = stock_service.sell_stock(symbol, quantity, price, input_datetime)
         elif action == 'reset':
             stock_service.reset_portfolio()
 
@@ -61,7 +62,7 @@ def dashboard():
         "total_current_profit": total_current_profit,
         "holdings": holdings,
         "transactions": transactions,
-        "profit": profit_print
+        "profit_recentmost": profit_print
     })
 
 @app.route('/stock_stats/<symbol>', methods=['GET'])
