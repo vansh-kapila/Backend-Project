@@ -1,52 +1,291 @@
 {
-    "swagger": "2.0",
-    "info": {
-      "title": "Stock Portfolio App",
-      "description": "An API that can be used to manage basic functionalities of a stock portfolio. Buy and sell operations can be performed on NASDAQ stocks at live prices.",
-      "version": "1.0"
+  "swagger": "2.0",
+  "info": {
+    "title": "Stock Portfolio App",
+    "description": "An API that can be used to manage basic functionalities of a stock portfolio. Buy and sell operations can be performed on NASDAQ stocks at live prices.",
+    "version": "1.0"
+  },
+  "basePath": "/api",
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Welcome message for the Stock Management API.",
+        "responses": {
+          "200": {
+            "description": "Welcome message.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Welcome to the Stock Management API!"
+                }
+              }
+            }
+          }
+        }
+      }
     },
-    "basePath": "/api",
-    "schemes": [
-      "http"
-    ],
-    "consumes": [
-      "application/json"
-    ],
-    "produces": [
-      "application/json"
-    ],
-    "paths": {
-      "/dashboard": {
-        "get": {
-          "summary": "Returns the stock dashboard.",
-          "produces": [
-            "application/json"
-          ],
-          "responses": {
-            "200": {
-              "description": "Successful response.",
-              "schema": {
+    "/dashboard": {
+      "get": {
+        "summary": "Returns the stock dashboard with various metrics.",
+        "responses": {
+          "200": {
+            "description": "Dashboard data including stocks, net worth, profits, holdings, and transactions.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "stocks": {
+                  "type": "array",
+                  "items": { "type": "object" }
+                },
+                "invested_amount": { "type": "string" },
+                "net_worth": { "type": "string" },
+                "realized_profit": { "type": "string" },
+                "total_current_profit": { "type": "string" },
+                "holdings": {
+                  "type": "array",
+                  "items": { "type": "object" }
+                },
+                "transactions": {
+                  "type": "array",
+                  "items": { "type": "object" }
+                },
+                "profit_recentmost": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Perform buy, sell, or reset actions on stocks.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "action": { "type": "string", "example": "buy", "description": "Action to perform: 'buy', 'sell', or 'reset'" },
+                "symbol": { "type": "string", "example": "AAPL", "description": "Stock symbol" },
+                "quantity": { "type": "integer", "example": 10, "description": "Quantity of stock" },
+                "price": { "type": "string", "example": "150.00", "description": "Price of stock" },
+                "date": { "type": "string", "example": "2023-08-01 12:00:00", "description": "Transaction date and time" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard data updated after transaction.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "stocks": {
+                  "type": "array",
+                  "items": { "type": "object" }
+                },
+                "invested_amount": { "type": "string" },
+                "net_worth": { "type": "string" },
+                "realized_profit": { "type": "string" },
+                "total_current_profit": { "type": "string" },
+                "holdings": {
+                  "type": "array",
+                  "items": { "type": "object" }
+                },
+                "transactions": {
+                  "type": "array",
+                  "items": { "type": "object" }
+                },
+                "profit_recentmost": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stock_stats/{symbol}": {
+      "get": {
+        "summary": "Get statistics for a specific stock symbol.",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The stock symbol to get stats for."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statistics for the specified stock symbol.",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/realized_profit_stats": {
+      "get": {
+        "summary": "Get realized profit statistics over time.",
+        "responses": {
+          "200": {
+            "description": "Realized profit data over time.",
+            "schema": {
+              "type": "array",
+              "items": { "type": "object" }
+            }
+          }
+        }
+      }
+    },
+    "/sector_stats": {
+      "get": {
+        "summary": "Get statistics grouped by sector.",
+        "responses": {
+          "200": {
+            "description": "Sector-wise statistics.",
+            "schema": {
+              "type": "array",
+              "items": { "type": "object" }
+            }
+          }
+        }
+      }
+    },
+    "/cap_stats": {
+      "get": {
+        "summary": "Get statistics grouped by market capitalization.",
+        "responses": {
+          "200": {
+            "description": "Market capitalization statistics.",
+            "schema": {
+              "type": "array",
+              "items": { "type": "object" }
+            }
+          }
+        }
+      }
+    },
+    "/spec": {
+      "get": {
+        "summary": "Get the API documentation in Swagger format.",
+        "responses": {
+          "200": {
+            "description": "Swagger documentation.",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/swagger.json": {
+      "get": {
+        "summary": "Serve the Swagger JSON documentation.",
+        "responses": {
+          "200": {
+            "description": "Swagger JSON.",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/historical_data": {
+      "get": {
+        "summary": "Get historical stock data for a given symbol and date range.",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The stock symbol to get historical data for."
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "Start date for historical data in YYYY-MM-DD format."
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "End date for historical data in YYYY-MM-DD format."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historical stock data.",
+            "schema": {
+              "type": "array",
+              "items": {
                 "type": "object",
                 "properties": {
-                  "message": {
-                    "type": "string"
-                  },
-                  "message2": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  }
+                  "x": { "type": "string", "example": "2023-08-01" },
+                  "y": { "type": "number", "example": 150.00 }
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/networthgraph_data": {
+      "get": {
+        "summary": "Get net worth data over a specific date range.",
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "Start date for net worth data in YYYY-MM-DD format."
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "End date for net worth data in YYYY-MM-DD format."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Net worth data over the specified date range.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": { "type": "string", "example": "2023-08-01" },
+                  "networth": { "type": "number", "example": 10000.00 }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date format or missing required parameters.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": { "type": "string", "example": "Invalid date format. Use YYYY-MM-DD." }
               }
             }
           }
@@ -54,3 +293,4 @@
       }
     }
   }
+}
