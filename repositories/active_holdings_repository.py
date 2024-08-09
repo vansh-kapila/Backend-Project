@@ -2,6 +2,7 @@ import pymysql
 import decimal 
 import yfinance as yf
 import json
+from collections import defaultdict
 class ActiveHoldingsRepository:
 
     def get_db_connection(self):

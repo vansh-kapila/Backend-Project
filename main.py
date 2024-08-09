@@ -38,7 +38,7 @@ def dashboard():
         action = data.get('action') 
         symbol = data.get('symbol')
         quantity = int(data.get('quantity', 0))
-        price = decimal.Decimal(data.get('price', 0))
+        price = decimal.Decimal(data.get('price', 0)) 
         if action == 'buy':
             stock_service.buy_stock(symbol, quantity, price)
         elif action == 'sell':
@@ -68,6 +68,21 @@ def dashboard():
 def stock_stats(symbol):
     stats = stock_service.get_stock_stats(symbol)
     return jsonify(stats)
+
+@app.route('/realized_profit_stats', methods=['GET'])
+def realized_profit_vs_time():
+    realized_profit_vs_time = stock_service.calculate_invested_amount()
+    return jsonify(realized_profit_vs_time[2])
+
+@app.route('/sector_stats', methods=['GET'])
+def sector():
+    sectors = stock_service.sector_graphs()
+    return jsonify(sectors)
+
+@app.route('/cap_stats', methods=['GET'])
+def cap():
+    caps = stock_service.cap_graphs()
+    return jsonify(caps)
 
 @app.route("/spec")
 def spec():
