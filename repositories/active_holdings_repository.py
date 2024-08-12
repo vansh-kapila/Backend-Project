@@ -3,6 +3,8 @@ import decimal
 import yfinance as yf
 import json
 from collections import defaultdict
+import random
+from decimal import ROUND_HALF_UP
 class ActiveHoldingsRepository:
 
     def get_db_connection(self):
@@ -91,7 +93,8 @@ class ActiveHoldingsRepository:
         buy_price = cursor.fetchone()[0] or decimal.Decimal(0)
         cursor.close()
         connection.close()
-        return buy_price
+        value = buy_price+(buy_price*decimal.Decimal((round(random.uniform(-0.03,0.03),2))))
+        return value
 
     def get_transactions(self):
         connection = self.get_db_connection()
