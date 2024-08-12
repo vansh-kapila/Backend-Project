@@ -88,7 +88,7 @@ class StockService:
         return holdings
 
     def get_networth(self):
-        return self.active_holdings_repository.get_net_worth_amount()
+        return self.active_holdings_repository.get_net_worth_amount2()
 
     def get_transactions(self):
         return self.transaction_repository.get_transactions()
