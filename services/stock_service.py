@@ -7,6 +7,7 @@ import heapq
 from flask import Flask, session
 from collections import defaultdict
 from datetime import datetime
+import random
 class StockService:
     def __init__(self):
         self.stock_repository = StockRepository()
