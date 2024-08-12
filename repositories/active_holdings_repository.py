@@ -12,10 +12,12 @@ class ActiveHoldingsRepository:
         if action=="buy":
             connection = self.get_db_connection()
             cursor = connection.cursor()
+            stock = yf.Ticker(symbol)
+            currPrice = decimal.Decimal(stock.history(period='1d').iloc[0]['Close'])
             cursor.execute("""
-                INSERT INTO ACTIVE_HOLDINGS (Symbol, Quantity, Price, TransactionDate)
-                VALUES (%s, %s, %s, %s)
-            """, (symbol, quantity, price, datetime))
+                INSERT INTO ACTIVE_HOLDINGS (Symbol, Quantity, Price, TransactionDate, Currprice)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (symbol, quantity, price, datetime, currPrice))
             connection.commit()
             cursor.close()
             connection.close()
@@ -74,6 +76,17 @@ class ActiveHoldingsRepository:
         cursor = connection.cursor()
         cursor.execute("""
             SELECT SUM(Price*Quantity) FROM ACTIVE_HOLDINGS
+        """)
+        buy_price = cursor.fetchone()[0] or decimal.Decimal(0)
+        cursor.close()
+        connection.close()
+        return buy_price
+    
+    def get_net_worth_amount2(self):
+        connection = self.get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("""
+            SELECT SUM(Currprice*Quantity) FROM ACTIVE_HOLDINGS
         """)
         buy_price = cursor.fetchone()[0] or decimal.Decimal(0)
         cursor.close()
